@@ -1,0 +1,59 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    title Android Video Streaming
+    script(src='js/jquery-1.9.1.min.js', type='text/javascript')
+    
+    link(rel='stylesheet', type='text/css', href='css/style.css')
+    link(href='https://vjs.zencdn.net/5.19/video-js.css', rel='stylesheet')
+  body
+    
+    // Header
+    #header
+        .container
+            h1 Android Video Streaming
+    
+    #container
+        #video_preview
+            video#player.video-js(controls='', preload='auto', width='640', height='400', poster='', data-setup='{}')
+                source(src='rtmp://192.168.1.35:1935/live/myStream', type='rtmp/mp4')
+        
+            button#move_w.myButton w
+            button#move_a.myButton a
+            button#move_s.myButton s
+            button#move_d.myButton d
+            .clear
+            br
+            br
+            br
+            input#stream_url(type='text', value='rtmp://192.168.1.35:1935/live/myStream')
+            br
+        .clear
+    
+    
+    //SCRIPTS
+    script(src='https://vjs.zencdn.net/5.19/video.js')
+    script(src='/socket.io/socket.io.js')
+    script(type='text/javascript').
+        
+        //configuration videojs player
+        var myPlayer = videojs('player', {}, function(){
+            var player = this;
+            player.on("pause", function () {
+                player.one("play", function () {
+                    player.load();
+                    player.play();
+                });
+            });
+        });
+
+        //manage commands
+        $(function () {
+            var socket = io();
+
+            $("#move_w").on('click', function(event){
+                socket.emit('move', {move_to: "w"});
+                //alert("stop clicked")
+            });
+        });
