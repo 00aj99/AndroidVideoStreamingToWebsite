@@ -25,13 +25,25 @@ body {
     margin: 0;
     padding: 15px 0;
 }
-#video_preview{
+#container{
+    overflow: hidden !important;
     text-align: center;
+}
+.video_preview{
+    float: left !important;
+    margin-left: 10%;
+    margin-right: 30px;
+    margin-top: 60px;
+    text-align: center;
+}
+.title{
+    margin: 0;
+    padding: 0;
 }
 #player, #player_wrapper{
     margin: 0 auto !important;
     margin-bottom: 20px !important;
-    margin-top: 60px !important;    
+    /*margin-top: 60px !important;*/    
 }
 input#stream_url{
     background: none;

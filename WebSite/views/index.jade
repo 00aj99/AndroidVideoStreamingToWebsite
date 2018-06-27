@@ -2,11 +2,10 @@ doctype html
 html
   head
     meta(charset='utf-8')
-    title Android Video Streaming
-    script(src='js/jquery-1.9.1.min.js', type='text/javascript')
-    
-    link(rel='stylesheet', type='text/css', href='css/style.css')
+    title Android Video Streaming  
+   
     link(href='https://vjs.zencdn.net/5.19/video-js.css', rel='stylesheet')
+    link(rel='stylesheet', type='text/css', href='css/style.css')
   body
     
     // Header
@@ -14,8 +13,10 @@ html
         .container
             h1 Android Video Streaming
     
-    #container
-        #video_preview
+    #container 
+        .video_preview
+            .title
+                h1  Xiaomi Redmi Note 4
             video#player.video-js(controls='', preload='auto', width='640', height='400', poster='', data-setup='{}')
                 source(src='rtmp://192.168.1.35:1935/live/myStream', type='rtmp/mp4')
         
@@ -29,16 +30,15 @@ html
             br
             input#stream_url(type='text', value='rtmp://192.168.1.35:1935/live/myStream')
             br
-        .clear
-    
     
     //SCRIPTS
+    script(src='js/jquery-1.9.1.min.js', type='text/javascript')
     script(src='https://vjs.zencdn.net/5.19/video.js')
     script(src='/socket.io/socket.io.js')
     script(type='text/javascript').
         
         //configuration videojs player
-        var myPlayer = videojs('player', {}, function(){
+        /*var myPlayer = videojs('player', {}, function(){
             var player = this;
             player.on("pause", function () {
                 player.one("play", function () {
@@ -46,7 +46,7 @@ html
                     player.play();
                 });
             });
-        });
+        });*/
 
         //manage commands
         $(function () {
@@ -56,4 +56,49 @@ html
                 socket.emit('move', {move_to: "w"});
                 //alert("stop clicked")
             });
+
+            socket.on('streaming_data', function (data) {
+                console.log("dev: " + data['device'])
+                console.log("id: " + data['id_device'])
+                console.log("num: " + data['num_streamings'])
+
+                for(var i=0; i<data['num_streamings']; i++){
+                    createHTML(data['device'], data['id_device'], i);
+
+                }
+            });
+
+            function createHTML(dev, id, i){
+
+                //remove video player with android_id= id, si lo hubiera
+                if (document.contains(document.getElementById(id))) {
+                    var elem = document.getElementById(id);
+                    elem.parentNode.removeChild(elem);
+                } 
+
+                //generate new video player with id
+                var html = '<div class="android_id" id="'+id+'">'+
+                                '<div class="video_preview">'+
+                                    '<div class="title">'+
+                                    '    <h1>'+ dev +'</h1>'+
+                                    '</div>'+
+                                    '<video class="video-js" id="player" controls="" preload="auto" width="640" height="400" poster="" data-setup="{}">'+
+                                    '    <source src="rtmp://192.168.1.35:1935/live/mySt" type="rtmp/mp4"/>'+
+                                    '</video>'+
+                                    '<button class="myButton" id="move_w">w</button>'+
+                                    '<button class="myButton" id="move_a">a</button>'+
+                                    '<button class="myButton" id="move_s">s</button>'+
+                                    '<button class="myButton" id="move_d">d</button>'+
+                                    '<div class="clear"></div><br/><br/><br/>'+
+                                    '<input id="stream_url" type="text" value="rtmp://192.168.1.35:1935/live/myStream"/><br/>'+
+                                '</div>'+
+                            '</div>';
+            
+                document.getElementById('container').innerHTML += html;
+                
+                var newScript = document.createElement("script");
+                newScript.src = "https://vjs.zencdn.net/5.19/video.js";
+                document.getElementById('container').appendChild(newScript);
+            }
+
         });

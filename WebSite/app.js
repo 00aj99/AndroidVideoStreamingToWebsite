@@ -1,13 +1,14 @@
-#!/usr/bin/env node
+'use strict'
 
-var express = require('express'),
-    app     = express(),
-    server  = require('http').createServer(app),
-    io      = require('socket.io')(server),
-    fs      = require('fs'),
-    port    = process.env.PORT || 3000,
-    request = require('request'),
-    admin   = require("firebase-admin");
+var express     = require('express'),
+    app         = express(),
+    server      = require('http').createServer(app),
+    io          = require('socket.io')(server),
+    fs          = require('fs'),
+    port        = process.env.PORT || 3000,
+    request     = require('request'),
+    admin       = require("firebase-admin"),
+    nstreaming  = 0;
 
 app.use(express.static(__dirname + '/public'));
 app.set('view engine', 'jade')
@@ -38,13 +39,13 @@ ref.once("value", function(snapshot) {
   console.log(snapshot.val());
 });
 
-var camerasRef = ref.child("cameras");
+var numstreaming = ref.child("num_streamings");
 
 
 
 
 
-// -- PETICIONES HTTP
+// -- HTTP
 /*app.get('/', (req, res) => {
     res.render('home.jade');
 })*/
@@ -60,22 +61,13 @@ app.get('/', (req, res) => {
 // -- WEBSOCKET
 io.on('connection', function (socket) {
 
-    /*socket.on('message', function (data) {
-        console.log(data.binary);
-
-        socket.broadcast.emit('mensaje', {
-            username: socket.username,
-            message: data
-        });
-
-        /*socket.broadcast.emit('message', {
-            username: socket.username,
-            message: data
-        });
-    });*/
-
     socket.on('move', function (data) {
         console.log(data)
         socket.broadcast.emit('move', data);
+    });
+
+    socket.on('data_streaming', function (data) {
+        console.log(data)
+        socket.broadcast.emit('streaming_data', data);
     });
 });
