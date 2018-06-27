@@ -13,23 +13,8 @@ html
         .container
             h1 Android Video Streaming
     
-    #container 
-        .video_preview
-            .title
-                h1  Xiaomi Redmi Note 4
-            video#player.video-js(controls='', preload='auto', width='640', height='400', poster='', data-setup='{}')
-                source(src='rtmp://192.168.1.35:1935/live/myStream', type='rtmp/mp4')
-        
-            button#move_w.myButton w
-            button#move_a.myButton a
-            button#move_s.myButton s
-            button#move_d.myButton d
-            .clear
-            br
-            br
-            br
-            input#stream_url(type='text', value='rtmp://192.168.1.35:1935/live/myStream')
-            br
+    #container
+
     
     //SCRIPTS
     script(src='js/jquery-1.9.1.min.js', type='text/javascript')
@@ -37,33 +22,23 @@ html
     script(src='/socket.io/socket.io.js')
     script(type='text/javascript').
         
-        //configuration videojs player
-        /*var myPlayer = videojs('player', {}, function(){
-            var player = this;
-            player.on("pause", function () {
-                player.one("play", function () {
-                    player.load();
-                    player.play();
-                });
-            });
-        });*/
-
         //manage commands
         $(function () {
             var socket = io();
 
-            $("#move_w").on('click', function(event){
+            /*$("#move_w").on('click', function(event){
                 socket.emit('move', {move_to: "w"});
                 //alert("stop clicked")
-            });
+            });*/
 
-            socket.on('streaming_data', function (data) {
-                console.log("dev: " + data['device'])
-                console.log("id: " + data['id_device'])
+            socket.on('data_streaming', function (data) {
+                console.log("dev: " + data['device_name'])
+                console.log("id: " + data['device_id'])
                 console.log("num: " + data['num_streamings'])
 
+                if(data['num_streamings'] > 0)
                 for(var i=0; i<data['num_streamings']; i++){
-                    createHTML(data['device'], data['id_device'], i);
+                    createHTML(data['device_name'], data['device_id'], i);
 
                 }
             });
@@ -83,7 +58,7 @@ html
                                     '    <h1>'+ dev +'</h1>'+
                                     '</div>'+
                                     '<video class="video-js" id="player" controls="" preload="auto" width="640" height="400" poster="" data-setup="{}">'+
-                                    '    <source src="rtmp://192.168.1.35:1935/live/mySt" type="rtmp/mp4"/>'+
+                                    '    <source src="rtmp://192.168.1.35:1935/live/myStream" type="rtmp/mp4"/>'+
                                     '</video>'+
                                     '<button class="myButton" id="move_w">w</button>'+
                                     '<button class="myButton" id="move_a">a</button>'+
@@ -96,9 +71,27 @@ html
             
                 document.getElementById('container').innerHTML += html;
                 
-                var newScript = document.createElement("script");
-                newScript.src = "https://vjs.zencdn.net/5.19/video.js";
-                document.getElementById('container').appendChild(newScript);
+                var video_script = document.createElement("script");
+                video_script.src = "https://vjs.zencdn.net/5.19/video.js";
+
+                var jquery = document.createElement("script");
+                jquery.src = "js/jquery-1.9.1.min.js";
+                
+
+                var script = document.createElement( "script" );
+                script.type = "text/javascript";
+                script.text = 'var myPlayer = videojs("player", {}, function(){'+
+                                    'var player = this;'+
+                                    'player.on("pause", function () {'+
+                                        'player.one("play", function () {'+
+                                            'player.load();'+
+                                            'player.play();'+
+                                        '});'+
+                                    '});'+
+                                '});';
+
+                document.getElementById('container').appendChild(jquery);
+                document.getElementById('container').appendChild(video_script);
             }
 
         });
