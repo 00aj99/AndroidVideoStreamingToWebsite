@@ -13,7 +13,29 @@ html
         .container
             h1 Android Video Streaming
     
-    #container
+    #contenedor
+        #listado
+
+        #container
+            .android_id(name='android_id')
+                .video_preview(id="video_preview")
+                    .title
+                        h1#titulo
+                    |                 
+                    #videazo
+                    .btn_group
+                        .title_comandos
+                            h2 Comandos de control
+                        .div_botones
+                            button#move_w.myButton(onclick='w()') w
+                            |             
+                            button#move_a.myButton(onclick='a()') a
+                            |             
+                            button#move_s.myButton(onclick='s()') s
+                            |             
+                            button#move_d.myButton(onclick='d()') d
+
+
 
     
     //SCRIPTS
@@ -22,76 +44,138 @@ html
     script(src='/socket.io/socket.io.js')
     script(type='text/javascript').
         
-        //manage commands
-        $(function () {
-            var socket = io();
+        var socket = io();
+        socket.emit('load_page')
 
-            /*$("#move_w").on('click', function(event){
-                socket.emit('move', {move_to: "w"});
-                //alert("stop clicked")
-            });*/
+        //manage commands
+        //$(function () {
+            var dev_enabled = '';
 
             socket.on('data_streaming', function (data) {
-                console.log("dev: " + data['device_name'])
-                console.log("id: " + data['device_id'])
+                var array_dispositivos = data['dispositivos'];
                 console.log("num: " + data['num_streamings'])
+                console.log("arr length: " + array_dispositivos.length)
 
-                if(data['num_streamings'] > 0)
-                for(var i=0; i<data['num_streamings']; i++){
-                    createHTML(data['device_name'], data['device_id'], i);
+                //Quitar el streaming que se esta visualizando si ese dispositivo ya no esta streameando
+                var encontrado = true;
+                for(var i=0; i<array_dispositivos.length; i++){
+                    if(dev_enabled == array_dispositivos[i][0]){
+                        encontrado = true;
+                        break;
+                    }
+                    else{
+                        encontrado = false;
+                    }
+                }
 
+                //Limpiar contenido del listado
+                while (document.getElementById('listado').hasChildNodes()) {
+                    document.getElementById('listado').removeChild(document.getElementById('listado').lastChild);
+                }
+        
+                //ocultar el div del streaming
+                if(data['num_streamings'] == 0 || encontrado == false){
+                    document.getElementById('video_preview').style.display = 'none';
+                }
+                    
+
+                //Añadir elementos al listado
+                if(data['num_streamings'] > 0 ){
+                    var ul = document.createElement('ul');
+                    document.getElementById('listado').appendChild( ul );
+
+                    console.log("tamaño array: "+array_dispositivos.length)
+                    for(var i=0; i<array_dispositivos.length; i++){
+
+                        var id      = array_dispositivos[i][0];
+                        var name    = array_dispositivos[i][1];
+                        var url     = array_dispositivos[i][2];
+
+                        var li           = document.createElement('li');
+                        li.id            = id;
+                        li.innerHTML     = name;
+                        li.style.display = 'inline';
+
+                        var button                = document.createElement('button');
+                        button.id                 = id;
+                        button.innerHTML          = 'Online';
+                        button.classList.add('btn_live');
+                        button.onclick = (function (name, id, url) {
+                            return function () {
+                                setStreaming(name, id, url)
+                            };
+                        })(name, id, url);
+
+                        ul.appendChild( button );
+                        ul.appendChild( li );
+                        ul.appendChild(document.createElement("br"));
+                        ul.appendChild(document.createElement("br"));
+                    }
                 }
             });
 
-            function createHTML(dev, id, i){
 
-                //remove video player with android_id= id, si lo hubiera
-                if (document.contains(document.getElementById(id))) {
-                    var elem = document.getElementById(id);
-                    elem.parentNode.removeChild(elem);
-                } 
+            function setStreaming(dev, id, url){
+                dev_enabled = id;
 
-                //generate new video player with id
-                var html = '<div class="android_id" id="'+id+'">'+
-                                '<div class="video_preview">'+
-                                    '<div class="title">'+
-                                    '    <h1>'+ dev +'</h1>'+
-                                    '</div>'+
-                                    '<video class="video-js" id="player" controls="" preload="auto" width="640" height="400" poster="" data-setup="{}">'+
-                                    '    <source src="rtmp://192.168.1.35:1935/live/myStream" type="rtmp/mp4"/>'+
-                                    '</video>'+
-                                    '<button class="myButton" id="move_w">w</button>'+
-                                    '<button class="myButton" id="move_a">a</button>'+
-                                    '<button class="myButton" id="move_s">s</button>'+
-                                    '<button class="myButton" id="move_d">d</button>'+
-                                    '<div class="clear"></div><br/><br/><br/>'+
-                                    '<input id="stream_url" type="text" value="rtmp://192.168.1.35:1935/live/myStream"/><br/>'+
-                                '</div>'+
-                            '</div>';
-            
-                document.getElementById('container').innerHTML += html;
-                
+                //borrar contenido del div del streaming
+                document.getElementById('videazo').innerHTML = '';
+
+
+                //poner id al div android_id y contenido al titulo
+                document.getElementById('container').childNodes[0].setAttribute('id', id);
+                document.getElementById('titulo').innerHTML = dev;
+
+
+                var video = document.createElement('video');
+                video.id            = 'player';
+                video.classList.add('video-js');
+                video.controls      = '';
+                video.preload       ='auto';
+                video.width         ='640'; 
+                video.height        ='400'; 
+                video.poster        =''; 
+                video.setAttribute('controls', '');
+                video.setAttribute('data-setup', '{}');
+
+
+                var source  = document.createElement('source');
+                source.src  = 'rtmp://'+ url;
+                source.type = 'rtmp/mp4';
+
+
                 var video_script = document.createElement("script");
                 video_script.src = "https://vjs.zencdn.net/5.19/video.js";
 
                 var jquery = document.createElement("script");
                 jquery.src = "js/jquery-1.9.1.min.js";
-                
 
-                var script = document.createElement( "script" );
-                script.type = "text/javascript";
-                script.text = 'var myPlayer = videojs("player", {}, function(){'+
-                                    'var player = this;'+
-                                    'player.on("pause", function () {'+
-                                        'player.one("play", function () {'+
-                                            'player.load();'+
-                                            'player.play();'+
-                                        '});'+
-                                    '});'+
-                                '});';
 
                 document.getElementById('container').appendChild(jquery);
                 document.getElementById('container').appendChild(video_script);
-            }
+                
+                document.getElementById('videazo').appendChild(video);
+                document.getElementById('player').appendChild(source);
+                
 
-        });
+                //mostrar div de streaming
+                document.getElementById('video_preview').style.display = 'block';
+            }
+        //});
+
+
+        function w(){
+            socket.emit('send_mensaje', {'mensaje': 'w'})
+        }
+
+        function a(){
+            socket.emit('send_mensaje', {'mensaje': 'a'})
+        }
+
+        function s(){
+            socket.emit('send_mensaje', {'mensaje': 's'})
+        }
+
+        function d(){
+            socket.emit('send_mensaje', {'mensaje': 'd'})
+        }
